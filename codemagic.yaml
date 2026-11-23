@@ -1,0 +1,39 @@
+workflows:
+  study_bd_android:
+    name: Study BD Android
+    max_build_duration: 60
+    instance_type: linux_x2
+    environment:
+      flutter: 3.50.1
+      java: 17
+      groups:
+        - study_bd_android
+      vars:
+        PACKAGE_NAME: com.app.study_bd
+    triggering:
+      events:
+        - push
+        - pull_request
+      branch_patterns:
+        - pattern: main
+          include: true
+          source: true
+        - pattern: master
+          include: true
+          source: true
+    scripts:
+      - name: Write optional Firebase configuration
+        script: |
+          if [ -n "${FIREBASE_ANDROID_CONFIG:-}" ]; then
+            printf '%s' "$FIREBASE_ANDROID_CONFIG" > android/app/google-services.json
+          fi
+      - name: Get Flutter packages
+        script: flutter pub get
+      - name: Analyze and test
+        script: |
+          flutter analyze --no-fatal-infos
+          flutter test
+      - name: Build debug APK
+        script: flutter build apk --debug
+    artifacts:
+      - build/app/outputs/flutter-apk/*.apk
